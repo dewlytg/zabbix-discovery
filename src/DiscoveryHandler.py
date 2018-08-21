@@ -37,7 +37,7 @@ def getProcessList():
 def getPortList():
     try:
         command_output_all = subprocess.getoutput(
-            "ss -lntp|egrep -v '127.0.0.1|tcp6|snmp|ssh|10050'|awk '{print $4}'|awk -F '[ :]+' 'NR>=3 {print $NF}'").strip(
+            "ss -lnput|egrep -v '127.0.0.1|tcp6|snmp|ssh|10050'|awk '{print $5}'|awk -F '[ :]+' 'NR>1 {print $NF}'|sort |uniq").strip(
             "\n")
         command_output_all_list = command_output_all.split("\n")
         formated_data = handler.schemaZabbixData(command_output_all_list, "{#PORT}")
