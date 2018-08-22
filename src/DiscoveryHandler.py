@@ -16,7 +16,7 @@ def getProcessList():
             line = line.strip().decode()
             if line == "vnode": #vnode process
                 command_output = subprocess.getoutput(
-                    "ps aux |grep %s|egrep -v 'grep|rotatelogs|py'|awk '{print $(NF-2),$(NF-1)}'" % line)
+                    "ps aux |grep '/var/neo/vnode/vnode'|egrep -v 'grep|rotatelogs|py'|awk '{print $(NF-2),$(NF-1)}'")
                 command_output_all += command_output + "\n"
             else: # anther process
                 command_status, command_output = subprocess.getstatusoutput(
@@ -40,8 +40,8 @@ def getPortList():
             "ss -lnput|egrep -v '127.0.0.1|tcp6|snmp|ssh|10050'|awk '{print $5}'|awk -F '[ :]+' 'NR>1 {print $NF}'|sort |uniq").strip(
             "\n")
         command_output_all_list = command_output_all.split("\n")
-        formated_data = handler.schemaZabbixData(command_output_all_list, "{#PORT}")
-        _redisHandler(discovery_port_key,command_output_all_list,"{#PORT}",formated_data)
+        formated_data = handler.schemaZabbixData(command_output_all_list, "{#TCP_PORT}")
+        _redisHandler(discovery_port_key,command_output_all_list,"{#TCP_PORT}",formated_data)
     except Exception as e:
         traceback.print_exc()
         print(e)
