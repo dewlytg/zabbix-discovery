@@ -101,7 +101,7 @@ def _getProcCmdLine(pid):
 
 def logger(loggername,level,msg):
     # get current datetime
-    today = datetime.datetime.now().strftime("%Y-%d-%m")
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
 
     # create logger
     logger = logging.getLogger(loggername)
