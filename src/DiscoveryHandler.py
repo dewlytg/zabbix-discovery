@@ -1,8 +1,17 @@
 from utils import handler
-import traceback,subprocess,json,time,requests
+import traceback,json,time,requests,sys
+
+try:
+    if sys.version_info  > (3, 0):
+        import subprocess as sbprocess
+    else:
+        import commands as sbprocess
+except Exception:
+    traceback.print_exc()
+
 
 _local_ip = handler.getIpAddr()
-_hostname = subprocess.getoutput("echo $HOSTNAME")
+_hostname = sbprocess.getoutput("echo $HOSTNAME")
 discovery_process_key = "".join(["cutt.vnode.process.", _local_ip])
 discovery_port_key = "".join(["cutt.vnode.port.", _local_ip])
 cutt_monitor_process_key = "cutt.process"
@@ -20,11 +29,11 @@ def getProcessList():
         for line in cuttprocess:
             line = line.strip().decode()
             if line == "vnode": #vnode process
-                command_output = subprocess.getoutput(
+                command_output = sbprocess.getoutput(
                     "ps aux |grep '/var/neo/vnode/vnode'|egrep -v 'grep|rotatelogs|py'|awk '{print $(NF-2),$(NF-1)}'")
                 command_output_all += command_output + "\n"
             else: # anther process
-                command_status, command_output = subprocess.getstatusoutput(
+                command_status, command_output = sbprocess.getstatusoutput(
                     "ps axu|grep %s|egrep -v 'grep|rotatelogs|py'" % line)
                 if command_status == 0:
                     command_output = line + "\n"
@@ -41,7 +50,7 @@ def getProcessList():
 
 def getPortList():
     try:
-        command_output_all = subprocess.getoutput(
+        command_output_all = sbprocess.getoutput(
             "ss -lnput|egrep -v '127.0.0.1|tcp6|snmp|ssh|10050'|awk '{print $5}'|awk -F '[ :]+' 'NR>1 {print $NF}'|sort |uniq").strip(
             "\n")
         command_output_all_list = command_output_all.split("\n")
@@ -103,7 +112,7 @@ def push_metric_to_falcon(list_iter):
         ts = int(time.time())
         info_list = []
         for line in list_iter:
-            command_status, command_output = subprocess.getstatusoutput("ps axu|grep '%s'|egrep -v 'grep|rotatelogs|py'" % line)
+            command_status, command_output = sbprocess.getstatusoutput("ps axu|grep '%s'|egrep -v 'grep|rotatelogs|py'" % line)
             vnode_id,vnode_name = line.split()
             value = 0 if command_status else 1
             dict_info = {"endpoint": _hostname,
