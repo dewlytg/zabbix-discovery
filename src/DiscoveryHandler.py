@@ -42,7 +42,7 @@ def getProcessList():
             command_output_all = command_output_all.strip()
             command_output_all_list = command_output_all.split("\n")
         ret = _redisHandler(discovery_process_key, command_output_all_list, "{#PROCESS}") # thought redishandler to  union last vnode list and new vnode list
-        push_metric_to_falcon(ret)
+        if ret:push_metric_to_falcon(ret)
     except Exception as e:
         traceback.print_exc()
         print(e)
@@ -113,15 +113,24 @@ def push_metric_to_falcon(list_iter):
         info_list = []
         for line in list_iter:
             command_status, command_output = sbprocess.getstatusoutput("ps axu|grep '%s'|egrep -v 'grep|rotatelogs|py'" % line)
-            vnode_id,vnode_name = line.split()
             value = 0 if command_status else 1
-            dict_info = {"endpoint": _hostname,
-                         "metric": vnode_name,
-                         "timestamp": ts,
-                         "step": 60,
-                         "value": value,
-                         "counterType": "GAUGE",
-                         "tags": "vnode_id:%s, srv=vnode" % str(vnode_id)}
+            if "Neo" in line:
+                vnode_id, vnode_name = line.split()
+                dict_info = {"endpoint": _hostname,
+                             "metric": vnode_name,
+                             "timestamp": ts,
+                             "step": 60,
+                             "value": value,
+                             "counterType": "GAUGE",
+                             "tags": "vnode_id:%s, srv=vnode" % str(vnode_id)}
+            else:
+                dict_info = {"endpoint": _hostname,
+                             "metric": line,
+                             "timestamp": ts,
+                             "step": 60,
+                             "value": value,
+                             "counterType": "GAUGE",
+                             "tags": "srv=common-service"}
             info_list.append(dict_info)
         requests.post("http://%s:1988/v1/push" % _local_ip, data=json.dumps(info_list))
         handler.logger("push","info","vnode process has push over...")
