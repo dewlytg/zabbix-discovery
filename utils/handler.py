@@ -1,7 +1,16 @@
-import redis,configparser
+import redis,sys
 import traceback
 import socket,datetime,logging
 import json,os,collections
+
+try:
+    if sys.version_info  > (3, 0):
+        import configparser
+    else:
+        import ConfigParser as configparser
+except Exception:
+    traceback.print_exc()
+
 
 
 def cache(*args,**kwargs):
