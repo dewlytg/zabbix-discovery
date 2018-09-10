@@ -42,7 +42,7 @@ def getProcessList():
             command_output_all = command_output_all.strip()
             command_output_all_list = command_output_all.split("\n")
         ret = _redisHandler(discovery_process_key, command_output_all_list, "{#PROCESS}") # thought redishandler to  union last vnode list and new vnode list
-        # if ret:push_metric_to_falcon(ret)
+        if ret:push_metric_to_falcon(ret)
     except Exception as e:
         traceback.print_exc()
         print(e)
@@ -113,7 +113,6 @@ def push_metric_to_falcon(list_iter):
         for line in list_iter:
             command_status, command_output = sbprocess.getstatusoutput("ps axu|grep '%s'|egrep -v 'grep|rotatelogs|py'" % line)
             value = 0 if command_status else 1
-            print(value,line)
             if "Neo" in line:
                 vnode_id, vnode_name = line.split()
                 dict_info = {"endpoint": _hostname,
