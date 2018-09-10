@@ -75,10 +75,9 @@ def _redisHandler(key,listobj,zabbix_macro):
         new_set = set(listobj)
         for i in last_data:
             old_set.add(list(i.values())[0])
-        if new_set.difference(old_set):
-            listobj = list(old_set.union(new_set))
-            new_formated_data = handler.schemaZabbixData(listobj, zabbix_macro)
-            r.set(key, new_formated_data)
+        listobj = list(old_set.union(new_set))
+        new_formated_data = handler.schemaZabbixData(listobj, zabbix_macro)
+        r.set(key, new_formated_data)
         print(r.get(key).decode())
     else:
         new_formated_data = handler.schemaZabbixData(listobj, zabbix_macro)
@@ -114,6 +113,7 @@ def push_metric_to_falcon(list_iter):
         for line in list_iter:
             command_status, command_output = sbprocess.getstatusoutput("ps axu|grep '%s'|egrep -v 'grep|rotatelogs|py'" % line)
             value = 0 if command_status else 1
+            print(value,line)
             if "Neo" in line:
                 vnode_id, vnode_name = line.split()
                 dict_info = {"endpoint": _hostname,
@@ -122,7 +122,7 @@ def push_metric_to_falcon(list_iter):
                              "step": 60,
                              "value": value,
                              "counterType": "GAUGE",
-                             "tags": "vnode_id:%s, srv=vnode" % str(vnode_id)}
+                             "tags": "vnode_id=%s, srv=vnode" % str(vnode_id)}
             else:
                 dict_info = {"endpoint": _hostname,
                              "metric": line,
