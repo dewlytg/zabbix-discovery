@@ -129,7 +129,7 @@ def push_metric_to_falcon(list_iter):
                              "step": 60,
                              "value": value,
                              "counterType": "GAUGE",
-                             "tags": "srv=common-service"}
+                             "tags": "name=%s, srv=common-service" % line}
             info_list.append(dict_info)
         requests.post("http://%s:1988/v1/push" % _local_ip, data=json.dumps(info_list))
         handler.logger("push","info","vnode process has push over...")
