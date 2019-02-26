@@ -11,12 +11,22 @@ except Exception:
     traceback.print_exc()
 
 
+"""
+本程序用于监控指定进程：
+1.普通进程监控方式，ss -lnpt |grep PROCESSNAME 此命令一两个作用，一个是发现进程是否存在，第二个必须要listen TCP端口，才认为是存在
+2.java进程监控方式，首先通过ps aux|grep PROCESSNAME 判断进程是存在并且获取进程ID，其次通过 jps 过滤出进程ID是否存在，如果存在才认识进程存在
+3.自定义vnode进程监控方式如下：
+
+因为这里监控java需要在agent上都安装jps，所以这里暂时不监控java进程
+"""
+
 _local_ip = handler.getIpAddr()
 _hostname = sbprocess.getoutput("echo $HOSTNAME")
 discovery_process_key = "".join(["cutt.vnode.process.", _local_ip])
 discovery_mysql_name = "".join(["cutt.mysql.name.", _local_ip])
 discovery_port_key = "".join(["cutt.vnode.port.", _local_ip])
 cutt_monitor_process_key = "cutt.process"
+java_process_list = ["kafka"] # java 进程监控方式有所不同
 
 
 def getProcessList():
@@ -34,9 +44,17 @@ def getProcessList():
                 command_output = sbprocess.getoutput(
                     "ps aux |grep '/var/neo/vnode/vnode'|egrep -v 'grep|rotatelogs|py'|awk '{print $(NF-2),$(NF-1)}'")
                 command_output_all += command_output + "\n"
+            # elif line in java_process_list: #java process
+            #     jps_status,jps_output = sbprocess.getstatusoutput("jps -q")
+            #     if jps_status == 0:
+            #         jps_list = jps_output.split("\n")
+            #         command_status, command_output = sbprocess.getstatusoutput("ps axu|grep %s|egrep -v 'grep|rotatelogs|py'|awk '{print $2}'" % line)
+            #         process_list = command_output.split("\n")
+            #         if set(jps_list).intersection(set(process_list)):
+            #             command_output = line + "\n"
+            #             command_output_all += command_output
             else: # anther process
-                command_status, command_output = sbprocess.getstatusoutput(
-                    "ss -lnpt|grep %s" % line)
+                command_status, command_output = sbprocess.getstatusoutput("ss -lnpt|grep %s" % line)
                 if command_status == 0:
                     command_output = line + "\n"
                     command_output_all += command_output
