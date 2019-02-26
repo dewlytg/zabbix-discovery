@@ -1,5 +1,6 @@
 from utils import handler
 import traceback,json,time,requests,sys
+from utils.handler import query_sql
 
 try:
     if sys.version_info  > (3, 0):
@@ -13,6 +14,7 @@ except Exception:
 _local_ip = handler.getIpAddr()
 _hostname = sbprocess.getoutput("echo $HOSTNAME")
 discovery_process_key = "".join(["cutt.vnode.process.", _local_ip])
+discovery_mysql_name = "".join(["cutt.mysql.name.", _local_ip])
 discovery_port_key = "".join(["cutt.vnode.port.", _local_ip])
 cutt_monitor_process_key = "cutt.process"
 
@@ -34,7 +36,7 @@ def getProcessList():
                 command_output_all += command_output + "\n"
             else: # anther process
                 command_status, command_output = sbprocess.getstatusoutput(
-                    "ps axu|grep %s|egrep -v 'grep|rotatelogs|py'" % line)
+                    "ss -lnpt|grep %s" % line)
                 if command_status == 0:
                     command_output = line + "\n"
                     command_output_all += command_output
@@ -145,3 +147,36 @@ def cacheHandler():
     r = handler.cache(**cache_connection)
     return r
 
+
+def getDbNameInfoList():
+    """
+    get all db name which do you want to monitoring!
+    :return:
+    """
+    try:
+        command_output_all = ""
+        config = handler.getConfigInfo("./config/db.cfg")
+        db_name_list = config.sections()
+        for line in db_name_list:
+            command_output = line + "\n"
+            command_output_all += command_output
+        else:
+            command_output_all = command_output_all.strip()
+            command_output_all_list = command_output_all.split("\n")
+            _redisHandler(discovery_mysql_name, command_output_all_list, "{#DBNAME}")
+    except Exception as e:
+        traceback.print_exc()
+        print(e)
+
+
+def get_metric_info(dbname,metric):
+    config = handler.getConfigInfo("./config/db.cfg")
+    connect_info = dict(config[dbname].items())
+
+    if "port" in connect_info:
+        connect_info["port"] = int(connect_info["port"])
+    sql = "show status like '%s';" % metric
+    query_result = query_sql(sql, **connect_info)
+    metric_info = query_result[0][1]
+    print(metric_info)
+    return
